@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>API Deprecation Header Checker — Find Sunset &amp; Deprecation Warnings</title>
+  <meta name="description" content="Check any API endpoint for Sunset, Deprecation, and version headers. Free tool to catch API deprecation warnings before they break your production app.">
+  <meta property="og:title" content="API Deprecation Header Checker">
+  <meta property="og:description" content="Check any API endpoint for Sunset, Deprecation, and X-Api-Version headers. Free, no signup.">
+  <meta property="og:url" content="https://lior-seats.github.io/api-deprecation-checker/">
+  <meta property="og:type" content="website">
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="API Deprecation Header Checker — Free">
+  <meta name="twitter:description" content="Find Sunset and Deprecation headers before your API breaks in production.">
+  <link rel="canonical" href="https://lior-seats.github.io/api-deprecation-checker/">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #0f1117; color: #e2e8f0; min-height: 100vh; line-height: 1.6; }
+    a { color: #63b3ed; text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    header { background: linear-gradient(135deg, #1a202c 0%, #2d3748 100%); border-bottom: 1px solid #2d3748; padding: 2.5rem 1.5rem 2rem; text-align: center; }
+    header h1 { font-size: 2rem; font-weight: 700; color: #f7fafc; margin-bottom: 0.5rem; }
+    header p { color: #a0aec0; max-width: 580px; margin: 0 auto; font-size: 1.05rem; }
+    .badge { display: inline-block; background: #2d3748; border: 1px solid #4a5568; color: #a0aec0; font-size: 0.78rem; border-radius: 4px; padding: 2px 8px; margin-top: 0.75rem; }
+    .container { max-width: 760px; margin: 0 auto; padding: 2rem 1.5rem; }
+    .card { background: #1a202c; border: 1px solid #2d3748; border-radius: 10px; padding: 1.75rem; margin-bottom: 1.5rem; }
+    .card h2 { font-size: 1.05rem; color: #cbd5e0; margin-bottom: 1.25rem; font-weight: 600; }
+    label { display: block; font-size: 0.85rem; color: #a0aec0; margin-bottom: 0.35rem; font-weight: 500; }
+    .hint { font-size: 0.75rem; color: #718096; margin-top: 0.3rem; }
+    input[type="url"], input[type="text"] {
+      width: 100%; background: #2d3748; border: 1px solid #4a5568; color: #e2e8f0;
+      border-radius: 6px; padding: 0.65rem 0.85rem; font-size: 0.95rem; outline: none; transition: border-color 0.15s;
+    }
+    input:focus { border-color: #63b3ed; }
+    .field { margin-bottom: 1rem; }
+    .examples { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-top: 0.4rem; }
+    .example-chip { background: #2d3748; border: 1px solid #4a5568; border-radius: 4px; font-size: 0.75rem; padding: 2px 8px; color: #a0aec0; cursor: pointer; transition: background 0.1s; font-family: 'SFMono-Regular', Consolas, monospace; }
+    .example-chip:hover { background: #4a5568; color: #e2e8f0; }
+    .btn-check { width: 100%; padding: 0.85rem; font-size: 1rem; font-weight: 700; border-radius: 8px; border: none; cursor: pointer; background: linear-gradient(135deg, #2c7a7b, #285e61); color: #fff; transition: opacity 0.15s; }
+    .btn-check:hover { opacity: 0.88; }
+    .btn-check:disabled { opacity: 0.4; cursor: not-allowed; }
+    #results { display: none; }
+    .verdict { display: flex; align-items: flex-start; gap: 1rem; padding: 1.25rem; border-radius: 8px; margin-bottom: 1.25rem; }
+    .verdict.clean { background: #1c4532; border: 1px solid #276749; }
+    .verdict.warning { background: #744210; border: 1px solid #975a16; }
+    .verdict.critical { background: #742a2a; border: 1px solid #9b2c2c; }
+    .verdict-icon { font-size: 1.75rem; flex-shrink: 0; }
+    .verdict-text h3 { font-size: 1rem; font-weight: 700; margin-bottom: 0.25rem; }
+    .verdict.clean h3 { color: #68d391; }
+    .verdict.warning h3 { color: #f6ad55; }
+    .verdict.critical h3 { color: #fc8181; }
+    .verdict-text p { font-size: 0.88rem; color: #cbd5e0; }
+    .meta-row { display: flex; gap: 1.5rem; flex-wrap: wrap; margin-bottom: 1rem; }
+    .meta-item .lbl { font-size: 0.78rem; color: #718096; }
+    .meta-item .val { font-size: 0.9rem; color: #e2e8f0; font-weight: 600; }
+    .header-table { width: 100%; border-collapse: collapse; font-size: 0.88rem; margin: 0.75rem 0; }
+    .header-table th { background: #2d3748; color: #a0aec0; padding: 0.55rem 0.85rem; text-align: left; font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.04em; }
+    .header-table td { padding: 0.55rem 0.85rem; border-bottom: 1px solid #2d3748; vertical-align: top; }
+    .header-table tr:last-child td { border-bottom: none; }
+    .header-name { font-family: 'SFMono-Regular', Consolas, monospace; color: #63b3ed; font-size: 0.82rem; }
+    .header-val { font-family: 'SFMono-Regular', Consolas, monospace; color: #e2e8f0; font-size: 0.82rem; word-break: break-all; }
+    .header-desc { color: #a0aec0; font-size: 0.82rem; }
+    .tag-warn { background: #744210; color: #f6ad55; font-size: 0.7rem; padding: 1px 6px; border-radius: 3px; font-weight: 700; margin-left: 4px; }
+    .tag-crit { background: #742a2a; color: #fc8181; font-size: 0.7rem; padding: 1px 6px; border-radius: 3px; font-weight: 700; margin-left: 4px; }
+    .all-headers details summary { cursor: pointer; font-size: 0.85rem; color: #a0aec0; padding: 0.5rem 0; }
+    .all-headers table { width: 100%; border-collapse: collapse; font-size: 0.8rem; margin-top: 0.5rem; }
+    .all-headers td { padding: 0.3rem 0.5rem; border-bottom: 1px solid #2d3748; font-family: 'SFMono-Regular', Consolas, monospace; }
+    .all-headers td:first-child { color: #718096; width: 200px; }
+    .all-headers td:last-child { color: #a0aec0; word-break: break-all; }
+    .cta-card { background: linear-gradient(135deg, #14343f, #1a4a5c); border: 1px solid #2c7a7b; border-radius: 10px; padding: 1.75rem; text-align: center; }
+    .cta-card h3 { font-size: 1.15rem; color: #f7fafc; margin-bottom: 0.5rem; }
+    .cta-card p { color: #81e6d9; font-size: 0.92rem; margin-bottom: 1.25rem; max-width: 480px; margin-left:auto; margin-right:auto; }
+    .btn-cta { display: inline-block; background: #2c7a7b; color: #fff; padding: 0.75rem 1.75rem; border-radius: 7px; font-weight: 700; font-size: 0.95rem; border: 1px solid #38b2ac; transition: background 0.15s; text-decoration: none; }
+    .btn-cta:hover { background: #38b2ac; text-decoration: none; }
+    .info-section ul { list-style: none; padding: 0; }
+    .info-section li { padding: 0.75rem 0; border-bottom: 1px solid #2d3748; font-size: 0.9rem; }
+    .info-section li:last-child { border-bottom: none; }
+    .info-section .header-key { font-family: 'SFMono-Regular', Consolas, monospace; color: #63b3ed; font-weight: 700; }
+    .spinner { display: inline-block; width: 16px; height: 16px; border: 2px solid rgba(255,255,255,0.3); border-top-color: #fff; border-radius: 50%; animation: spin 0.7s linear infinite; vertical-align: middle; margin-right: 6px; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .error-box { background: #742a2a; border: 1px solid #9b2c2c; border-radius: 6px; padding: 1rem; color: #fbd5d5; font-size: 0.9rem; }
+    footer { text-align: center; padding: 2rem 1.5rem; color: #4a5568; font-size: 0.82rem; border-top: 1px solid #1a202c; }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>📡 API Deprecation Header Checker</h1>
+  <p>Check any API endpoint for Sunset, Deprecation, and version headers. Find out if your API is going away before your production app does.</p>
+  <div class="badge">Free · No signup · Works on any HTTPS API endpoint</div>
+</header>
+
+<div class="container">
+
+  <div class="card">
+    <h2>🔍 Check an API endpoint</h2>
+
+    <div class="field">
+      <label>API endpoint URL (HTTPS only)</label>
+      <input type="url" id="url" placeholder="https://api.stripe.com/v1/balance" autocomplete="off" spellcheck="false">
+      <div class="examples">
+        Try:
+        <span class="example-chip" onclick="fill('https://api.github.com/meta')">api.github.com/meta</span>
+        <span class="example-chip" onclick="fill('https://httpbin.org/headers')">httpbin.org/headers</span>
+        <span class="example-chip" onclick="fill('https://httpbin.org/response-headers?Sunset=Sat%2C+01+Jan+2028+00%3A00%3A00+GMT&Deprecation=true')">simulate Sunset header</span>
+      </div>
+    </div>
+
+    <div class="field">
+      <label>Authorization header (optional)</label>
+      <input type="text" id="auth" placeholder="Bearer your-api-key-here">
+      <div class="hint">For authenticated endpoints like Stripe, GitHub private repos, etc. Never stored.</div>
+    </div>
+
+    <button class="btn-check" id="check-btn" onclick="runCheck()">Check for deprecation warnings →</button>
+  </div>
+
+  <div id="results">
+
+    <div id="r-verdict"></div>
+
+    <div class="card">
+      <h2>📋 Response details</h2>
+
+      <div class="meta-row">
+        <div class="meta-item"><div class="lbl">Status</div><div class="val" id="r-status">—</div></div>
+        <div class="meta-item"><div class="lbl">Latency</div><div class="val" id="r-latency">—</div></div>
+        <div class="meta-item"><div class="lbl">URL</div><div class="val" id="r-url" style="font-size:0.8rem;word-break:break-all;max-width:350px">—</div></div>
+      </div>
+
+      <h3 style="font-size:0.88rem;color:#a0aec0;margin-bottom:0.5rem;font-weight:600;text-transform:uppercase;letter-spacing:0.04em">Deprecation-related headers</h3>
+      <table class="header-table">
+        <thead><tr><th>Header</th><th>Value</th><th>Meaning</th></tr></thead>
+        <tbody id="r-dep-headers"></tbody>
+      </table>
+
+      <div class="all-headers" style="margin-top:0.75rem">
+        <details>
+          <summary>All response headers</summary>
+          <table id="r-all-headers"><tbody></tbody></table>
+        </details>
+      </div>
+    </div>
+
+    <div class="cta-card">
+      <h3>📡 Get continuous API deprecation monitoring</h3>
+      <p>APIWatch monitors changelogs for 50+ major APIs — Stripe, OpenAI, Twilio, GitHub — and alerts you the moment a breaking change or deprecation is announced. Know 30 days before your app does.</p>
+      <a href="https://lior-seats.github.io/apiwatch-waitlist/" class="btn-cta">Join the APIWatch waitlist →</a>
+      <div style="margin-top:0.75rem;font-size:0.82rem;color:#81e6d9">Early access pricing for waitlist members</div>
+    </div>
+
+  </div>
+
+  <!-- What these headers mean -->
+  <div class="card info-section">
+    <h2>📖 What these headers mean</h2>
+    <ul>
+      <li>
+        <div class="header-key">Sunset</div>
+        <div style="color:#a0aec0;font-size:0.88rem;margin-top:0.2rem">A date/time after which the resource will no longer be available. Defined in <a href="https://www.rfc-editor.org/rfc/rfc8594" target="_blank" rel="noopener">RFC 8594</a>. If you see this, you have until that date to migrate. The closer the date, the more urgent the action.</div>
+      </li>
+      <li>
+        <div class="header-key">Deprecation</div>
+        <div style="color:#a0aec0;font-size:0.88rem;margin-top:0.2rem">Signals that the endpoint is deprecated (may be a boolean "true" or a date). Often accompanies a Link header pointing to the replacement.</div>
+      </li>
+      <li>
+        <div class="header-key">X-Api-Version / Api-Version</div>
+        <div style="color:#a0aec0;font-size:0.88rem;margin-top:0.2rem">The version of the API that responded. If this changes without your code changing, you may have been automatically upgraded to a newer version.</div>
+      </li>
+      <li>
+        <div class="header-key">Link</div>
+        <div style="color:#a0aec0;font-size:0.88rem;margin-top:0.2rem">When paired with rel="deprecation" or rel="successor-version", points to the replacement endpoint or deprecation documentation.</div>
+      </li>
+      <li>
+        <div class="header-key">Warning</div>
+        <div style="color:#a0aec0;font-size:0.88rem;margin-top:0.2rem">A general-purpose warning header. Some APIs use this to signal deprecation with a human-readable message (e.g. Warning: 299 - "This endpoint is deprecated")</div>
+      </li>
+    </ul>
+  </div>
+
+  <!-- Cross-link -->
+  <div class="card" style="text-align:center;padding:1.25rem">
+    <p style="color:#a0aec0;font-size:0.88rem">
+      Also testing webhook endpoints?
+      <a href="https://lior-seats.github.io/webhook-tester/">Test any webhook URL → webhook-tester (free)</a>
+    </p>
+  </div>
+
+</div>
+
+<footer>
+  Built by <a href="https://lior-seats.github.io/">lior-seats</a> ·
+  <a href="https://lior-seats.github.io/apiwatch-waitlist/">APIWatch — API deprecation monitoring</a> ·
+  <a href="https://lior-seats.github.io/blog/api-deprecation-monitoring.html">Why APIs deprecate silently</a>
+</footer>
+
+<script>
+const PROXY = 'https://agent-control-plane-w3m9.onrender.com/api/check/api-headers';
+
+function fill(url) {
+  document.getElementById('url').value = url;
+  document.getElementById('url').focus();
+}
+
+const DEP_HEADERS = [
+  { key: 'sunset',          label: 'Sunset',            severity: 'critical', desc: 'API will stop working on this date. Migrate before then.' },
+  { key: 'deprecation',     label: 'Deprecation',       severity: 'critical', desc: 'This endpoint is deprecated. Check for a replacement.' },
+  { key: 'xApiVersion',     label: 'X-Api-Version',     severity: 'info',     desc: 'Currently serving API version.' },
+  { key: 'xApiDeprecated',  label: 'X-Api-Deprecated',  severity: 'warning',  desc: 'Custom deprecation header from this API provider.' },
+  { key: 'warning',         label: 'Warning',            severity: 'warning',  desc: 'Warning message from the server.' },
+  { key: 'link',            label: 'Link',               severity: 'info',     desc: 'May point to successor endpoint (rel="successor-version") or deprecation notice.' },
+];
+
+async function runCheck() {
+  const url = document.getElementById('url').value.trim();
+  const auth = document.getElementById('auth').value.trim();
+  if (!url) { alert('Please enter an API endpoint URL.'); return; }
+  if (!url.startsWith('https://')) { alert('Only HTTPS URLs are supported.'); return; }
+
+  const btn = document.getElementById('check-btn');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span>Checking…';
+  document.getElementById('results').style.display = 'none';
+
+  try {
+    const body = { url };
+    if (auth) body.authHeader = auth;
+    const resp = await fetch(PROXY, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+    const data = await resp.json();
+
+    if (!data.ok && data.error) {
+      showError(data.error);
+      return;
+    }
+
+    renderResults(data, url);
+  } catch(e) {
+    showError('Could not reach the checking proxy: ' + e.message);
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = 'Check for deprecation warnings →';
+  }
+}
+
+function renderResults(data, url) {
+  document.getElementById('results').style.display = 'block';
+
+  // Status + meta
+  const statusStr = data.status ? `${data.status} ${data.statusText || ''}` : 'N/A';
+  document.getElementById('r-status').textContent = statusStr;
+  document.getElementById('r-latency').textContent = data.latencyMs != null ? `${data.latencyMs} ms` : 'N/A';
+  document.getElementById('r-url').textContent = url.length > 70 ? url.slice(0,70)+'…' : url;
+
+  // Build deprecation headers table
+  const tbody = document.getElementById('r-dep-headers');
+  tbody.innerHTML = '';
+  let highestSeverity = 'clean';
+  let foundCount = 0;
+
+  for (const h of DEP_HEADERS) {
+    const val = data[h.key];
+    if (!val) {
+      tbody.innerHTML += `<tr><td class="header-name">${h.label}</td><td style="color:#4a5568;font-size:0.82rem">not present</td><td class="header-desc" style="color:#4a5568">—</td></tr>`;
+      continue;
+    }
+    foundCount++;
+    let tag = '';
+    if (h.severity === 'critical') { highestSeverity = 'critical'; tag = `<span class="tag-crit">ACTION REQUIRED</span>`; }
+    else if (h.severity === 'warning' && highestSeverity !== 'critical') { highestSeverity = 'warning'; tag = `<span class="tag-warn">CHECK</span>`; }
+    tbody.innerHTML += `<tr><td class="header-name">${h.label}${tag}</td><td class="header-val">${esc(val)}</td><td class="header-desc">${h.desc}</td></tr>`;
+  }
+
+  // Verdict
+  const verdictEl = document.getElementById('r-verdict');
+  if (data.error) {
+    verdictEl.innerHTML = `<div class="error-box">⚠️ ${esc(data.error)}</div>`;
+  } else if (highestSeverity === 'critical') {
+    verdictEl.innerHTML = `<div class="verdict critical"><div class="verdict-icon">🚨</div><div class="verdict-text"><h3>Deprecation signal detected</h3><p>This endpoint has a Sunset or Deprecation header present. You need to take action before the sunset date or risk a production outage.</p></div></div>`;
+  } else if (highestSeverity === 'warning') {
+    verdictEl.innerHTML = `<div class="verdict warning"><div class="verdict-icon">⚠️</div><div class="verdict-text"><h3>Deprecation warning present</h3><p>A deprecation-related header was found. Check with the API provider for a migration path.</p></div></div>`;
+  } else {
+    verdictEl.innerHTML = `<div class="verdict clean"><div class="verdict-icon">✅</div><div class="verdict-text"><h3>No deprecation signals found</h3><p>This endpoint has no Sunset, Deprecation, or version warning headers. That doesn't mean it won't be deprecated — but there's no active signal today.</p></div></div>`;
+  }
+
+  // All headers
+  const allTbody = document.querySelector('#r-all-headers tbody');
+  allTbody.innerHTML = '';
+  const hdrs = data.allHeaders || {};
+  if (Object.keys(hdrs).length === 0) {
+    allTbody.innerHTML = '<tr><td colspan="2" style="color:#718096">No response headers captured</td></tr>';
+  } else {
+    for (const [k, v] of Object.entries(hdrs)) {
+      allTbody.innerHTML += `<tr><td>${esc(k)}</td><td>${esc(String(v))}</td></tr>`;
+    }
+  }
+
+  document.getElementById('results').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+function showError(msg) {
+  document.getElementById('results').style.display = 'block';
+  document.getElementById('r-verdict').innerHTML = `<div class="error-box">⚠️ ${esc(msg)}</div>`;
+  document.getElementById('r-dep-headers').innerHTML = '';
+  document.querySelector('#r-all-headers tbody').innerHTML = '';
+}
+
+function esc(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+</script>
+</body>
+</html>
