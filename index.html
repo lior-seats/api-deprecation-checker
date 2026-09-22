@@ -306,5 +306,9 @@ function showError(msg) {
 
 function esc(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 </script>
+<script>
+// Hit counter u2014 fire and forget
+(function(){try{fetch('https://agent-control-plane-w3m9.onrender.com/api/hit?page=api-deprecation-checker',{mode:'no-cors'}).catch(function(){});}catch(e){}})();
+</script>
 </body>
 </html>
